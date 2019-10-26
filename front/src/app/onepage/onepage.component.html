@@ -30,7 +30,7 @@
   <div class="modal-body">
       <div class="form-group">
         <label for="Nombre del jugador"></label>
-        <input type="text" class="form-control" placeholder="Introduzca su nombre" [(ngModel)]="namePlayer">
+        <input type="text" class="form-control" placeholder="Introduzca su nombre" [(ngModel)]="playerName">
       </div>
   </div>
   <div class="modal-footer">
@@ -38,9 +38,10 @@
   </div>
 </ng-template>
 
+<!--Contenido-->
 <div class="container">
 
-  <ng-template [ngIf]="namePlayer == ''" [ngIfElse]="nameFull">
+  <ng-template [ngIf]="isValidPlayerName == false" [ngIfElse]="nameFull">
       <div class="my-3">
         <h4>Hola, por favor registrate.</h4>
       </div>
@@ -48,14 +49,25 @@
 
   <ng-template #nameFull>
     <div class="my-3">
-        <h4>Bienvenido al juego, {{namePlayer}}</h4>
+        <h4>Bienvenido al juego, {{playerName}}</h4>
     </div>
   </ng-template>
+
   <hr>
-  <div class="row">
-    <div class="col-md-6">
+
+  <!--Botón de registro-->
+  <div class="row justify-content-md-center" *ngIf="isValidPlayerName == false">
+    <div class="col-md-auto" >
+        <button type="button" class="btn btn-outline-primary mx-5" (click)="open(registrodeusuario)">Registrarme</button>
+    </div>
+  </div>
+
+  <div class="row justify-content-md-center" *ngIf="isValidPlayerName == true">
+
+    <!--Columna de partida-->
+    <div class="col-md-6 "  >
       <div class="contenedor" style="height: 220px; overflow-y: scroll;">
-        <h4>Movimientos Partida 3</h4>
+        <h4>Nombre de la partida: dasd</h4>
           <ul class="list-group" style="height: auto;">
             <li class="list-group-item">1. J1# 1:3 - 3:2 #J2</li>
             <li class="list-group-item">2. J1# 1:3 - 3:2 #J2</li>
@@ -86,13 +98,14 @@
         </form>
       </div>
     </div>
-    <div class="col-md-6">
+
+    <!--Columna del tablero-->
+    <div class="col-md-6 " >
       <h4>Tablero de partidas</h4>
       <table class="table table-striped">
         <thead>
           <tr>
-            <th scope="col">Partida</th>
-            <th scope="col">T. Jugador</th>
+            <th scope="col">Nombre</th>
             <th scope="col">Estatus</th>
             <th scope="col">Ganador</th>
             <th scope="col">Acción</th>
@@ -101,37 +114,38 @@
         <tbody>
           <tr>
             <th scope="row">Partida 1</th>
-            <td>2</td>
             <td>Jugando</td>
             <td>N/A</td>
             <td><button type="button" class="btn btn-outline-primary" (click)="unirmeAPartida()">Unirme a partida</button></td>
           </tr>
           <tr>
             <th scope="row">Partida 2</th>
-            <td>0</td>
             <td>Espera</td>
             <td>N/A</td>
             <td><button type="button" class="btn btn-outline-primary" (click)="unirmeAPartida()">Unirme a partida</button></td>
           </tr>
           <tr>
             <th scope="row">Partida 3</th>
-            <td>2</td>
             <td>Finalizó</td>
             <td>J 2</td>
             <td><button type="button" class="btn btn-outline-primary" (click)="unirmeAPartida()">Unirme a partida</button></td>
           </tr>
         </tbody>
       </table>
+
       <div class="mt-4">
           <button type="button" class="btn btn-outline-primary" (click)="open(creaciondepartidas)">Crear partida</button>
-          <button type="button" class="btn btn-outline-primary mx-5" (click)="open(registrodeusuario)">Registrarme</button>
-          <button type="button" class="btn btn-outline-primary" (click)="finalizar()">Termine de jugar</button>
+          <button type="button" class="btn btn-outline-primary mx-5" (click)="finalizar()">Terminé de jugar</button>
       </div>
     </div>
+
   </div>
+
+
   <div class="row">
     <div class="col-md-12">
-      <p class="text-center mt-5">Desarrolladores: Greg Gómez, Alexander De Azevedo y Cesar</p>
+      <p class="text-center mt-5">Desarrolladores: Greg Gómez, Alexander De Azevedo y Cesar Audrines</p>
     </div>
   </div>
+
 </div>

@@ -1,4 +1,5 @@
 require("./config/config");
+var query = require("./query");
 
 const rp = require("request-promise");
 const express = require("express");
@@ -6,22 +7,81 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const _ = require("lodash");
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
+
+//Contenido del enviroment
 const port = process.env.PORT;
-
 var nextplayer = process.env.NEXT;
-var app = express();
 
+var app = express();
 app.use(
   cors({
     origin: true,
     exposedHeaders: "x-access-token"
   })
 );
-
 app.use(bodyParser.json());
 
-//endpoints
+
+//Endpoints
 var nodeinfo = { haspapa: false };
+
+//Revisa si el nombre recibido existe en la db
+app.post("/checkplayername", urlencodedParser, (req, res) => {
+  let body = req.body;
+  console.log(body.name);
+  
+  let a = "SELECT * FROM users WHERE name='"+body.name+"'" ;
+  query( a, (result) => {
+
+    if (typeof result[0] != "undefined") {
+      console.log("el resultado es: " + JSON.stringify(result));
+      res.json({ status: "error", message: "el usuario ya existe" });
+    }else{
+
+      let b = "INSERT INTO users SET name='"+body.name+"'";
+      query( b, (result2) => {
+        console.log("el resultado ess: " + JSON.stringify(result2));
+        res.json({ status: "success", message: "registrado con exito" });
+      });
+
+
+      
+    }
+
+  });
+
+ // let result = query("SELECT * FROM users WHERE name='"+body.name+"'");
+  //console.log(result.length)
+  //console.log("el resultado ess: " + JSON.stringify(result[0]));
+
+  /*let body = _.pick(req.body, ["playernotified", "newplayer"]);
+  if (body.playernotified != nextplayer) {
+    // pass info of new player
+    let options = {
+      method: "POST",
+      uri: "http://localhost:" + nextplayer + "/newplayer",
+      resolveWithFullResponse: true,
+      json: true,
+      body:  body
+    };
+
+    rp(options)
+      .then(response => {
+        console.log("pasamos la info para el siguiente  " + nextplayer);
+      })
+      .catch(e => {
+        console.log("Error pasando la papa a " + nextplayer);
+      });
+
+  } else {
+    nextplayer = body.newplayer.port;
+  }*/
+
+  
+  
+});
+
+
 
 app.post("/catchball", urlencodedParser, (req, res) => {
   let body = _.pick(req.body, ["ball"]);

@@ -1,8 +1,7 @@
 import { Component, OnInit } from "@angular/core";
 import { HttpClient} from '@angular/common/http';
-import { Observable } from 'rxjs';
 import { FormBuilder, FormGroup, Validators} from '@angular/forms';
-import {NgbModal, ModalDismissReasons, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import {NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: "app-onepage",
@@ -15,7 +14,10 @@ export class OnepageComponent implements OnInit {
   myFormRegistrarJugador: FormGroup;
   closeResult: string;
   private modalRef: NgbModalRef;
-  namePlayer = '';
+
+  myNodePort = "10001";
+  isValidPlayerName = false;
+  playerName = '';
 
   constructor(
     public fb: FormBuilder,
@@ -28,7 +30,7 @@ export class OnepageComponent implements OnInit {
     this.myFormCrearPartida = this.fb.group({
       nameGame: ['', [Validators.required]],
     });
-    this.namePlayer = '';
+    this.playerName = '';
   }
 
   ngOnInit() {}
@@ -63,11 +65,30 @@ export class OnepageComponent implements OnInit {
     //Llamamos al metodo que me trae las partidas activas
   }
 
-
+  //Registra el nombre del usuario
   registrarse(){
-    console.log("Registrando usuario");
-    console.log(this.namePlayer);
-    this.modalRef.close();
+
+    let object = {
+      name: this.playerName
+    }
+
+    this.http
+    .post("http://localhost:"+this.myNodePort+"/checkplayername", object)
+    .subscribe((response: any)=>{
+
+     console.log(response);
+
+     if(response.status == "success"){
+      this.isValidPlayerName = true;
+      this.modalRef.close();
+     }else{
+        alert(response.message);
+     }
+
+    });
+
+
+    
     //Enviamos el nombre al back
   }
 
