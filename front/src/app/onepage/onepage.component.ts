@@ -77,3 +77,65 @@ export class OnepageComponent implements OnInit {
   }
 
 }
+
+
+/* ESTE ES LA LOGICA DEL PROFESOR
+export class OnepageComponent implements OnInit {
+
+  localobj = {
+    input1: "0",
+    input2: "0",
+    total: "0"
+  };
+
+  remoteobj = {
+    input1: "0",
+    input2: "0",
+    total: "0"
+  };
+
+  constructor(private http: HttpClient) {
+
+  }
+
+  ngOnInit() {}
+
+  add() {
+    let trans = parseInt(this.localobj.input1) + parseInt(this.localobj.input2);
+    this.localobj.total = trans + "";
+  }
+
+  sub() {
+    let trans = parseInt(this.localobj.input1) - parseInt(this.localobj.input2);
+    this.localobj.total = trans + "";
+  }
+
+
+  addRem() {
+
+    this.http
+    .post("http://localhost:10001/add", this.remoteobj)
+    .subscribe((response: any)=>{
+
+      this.remoteobj.input1 = response.input1;
+      this.remoteobj.input2 = response.input2;
+      this.remoteobj.total = response.total;
+
+    });
+  }
+
+  subRem() {
+    this.http
+    .post("http://localhost:10001/sub", this.remoteobj)
+    .subscribe((response: any)=>{
+      this.remoteobj.input1 = response.input1;
+      this.remoteobj.input2 = response.input2;
+      this.remoteobj.total = response.total;
+
+    });
+  }
+
+}
+
+
+*/
