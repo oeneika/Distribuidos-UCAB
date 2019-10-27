@@ -15,9 +15,11 @@ export class OnepageComponent implements OnInit {
   closeResult: string;
   private modalRef: NgbModalRef;
 
+  myPlayerId;
   myNodePort = "10001";
   isValidPlayerName = false;
   playerName = '';
+  allGames = [];
 
   constructor(
     public fb: FormBuilder,
@@ -35,6 +37,7 @@ export class OnepageComponent implements OnInit {
 
   ngOnInit() {}
 
+  //Abre un modal
   open(content) {
     let options: NgbModalOptions = {
       size: 'lg',
@@ -54,22 +57,59 @@ export class OnepageComponent implements OnInit {
     console.log("Estoy en una partida");
   }
 
-  cambiarDePartida(){
-    console.log("Cambiando de partida");
+  
+  //Trae todas las partidas
+  traerPartidas(){
+
+    this.http
+      .get("http://localhost:"+this.myNodePort+"/getGames")
+      .subscribe((response: any)=>{
+  
+      //console.log(response.partidas);   
+      this.allGames = response.partidas;
+
+      });
+
   }
 
+  //Crea una partida
   crearPartida(){
-    console.log("Creando una partida");
-    console.log(this.myFormCrearPartida.value);
-    this.modalRef.close();
-    //Llamamos al metodo que me trae las partidas activas
+    let gameName = this.myFormCrearPartida.value.nameGame;
+
+    if(gameName){
+
+      let object = {
+        name: gameName,
+        userId: this.myPlayerId 
+      }
+  
+      this.http
+      .post("http://localhost:"+this.myNodePort+"/checkgamename", object)
+      .subscribe((response: any)=>{
+  
+       console.log(response);
+  
+       if(response.status == "success"){     
+        this.modalRef.close();
+       }else{
+          alert(response.message);
+       }
+  
+      });
+
+    }else{
+      alert("El nombre de la partida no puede estar vacío");
+    }
+
+
   }
 
   //Registra el nombre del usuario
   registrarse(){
 
     let object = {
-      name: this.playerName
+      name: this.playerName,
+      register: 1,
     }
 
     this.http
@@ -79,7 +119,9 @@ export class OnepageComponent implements OnInit {
      console.log(response);
 
      if(response.status == "success"){
+      this.myPlayerId = response.id;
       this.isValidPlayerName = true;
+      this.traerPartidas();
       this.modalRef.close();
      }else{
         alert(response.message);
@@ -87,9 +129,33 @@ export class OnepageComponent implements OnInit {
 
     });
 
+  }
 
-    
-    //Enviamos el nombre al back
+  //Inicia
+  iniciar(){
+
+    let object = {
+      name: this.playerName,
+      register: 0
+    }
+
+    this.http
+    .post("http://localhost:"+this.myNodePort+"/checkplayername", object)
+    .subscribe((response: any)=>{
+
+     console.log(response);
+
+     if(response.status == "success"){
+      this.myPlayerId = response.id;
+      this.isValidPlayerName = true;
+      this.traerPartidas();
+      this.modalRef.close();
+     }else{
+        alert(response.message);
+     }
+
+    });
+
   }
 
 

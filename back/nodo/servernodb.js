@@ -25,6 +25,23 @@ app.use(bodyParser.json());
 //Endpoints
 var nodeinfo = { haspapa: false };
 
+
+app.post("/setName", urlencodedParser, (req, res) => {
+
+    let body = req.body;
+    //console.log(body.name);
+    process.env.NAMENODE = body.name;
+    res.json({ status: "succes", message: "nombre seteado");
+
+});
+
+
+
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////
 //Revisa si el nombre recibido existe en la db
 app.post("/checkplayername", urlencodedParser, (req, res) => {
   let body = req.body;
@@ -206,6 +223,12 @@ app.post("/newplayer", urlencodedParser, (req, res) => {
   res.json({ status: "success", message: "newplayer" });
   
 });
+
+
+
+
+
+
 
 // not match endpoints
 app.get("/*", (req, res) => {

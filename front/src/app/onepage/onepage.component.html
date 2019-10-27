@@ -38,6 +38,25 @@
   </div>
 </ng-template>
 
+<!-- Modal inicio de usuario -->
+<ng-template #iniciodeusuario let-modal>
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title">Inicio de usuario</h4>
+      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+          <label for="Nombre del jugador"></label>
+          <input type="text" class="form-control" placeholder="Introduzca su nombre" [(ngModel)]="playerName">
+        </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-dark" (click)="iniciar()">Iniciar</button>
+    </div>
+  </ng-template>
+
 <!--Contenido-->
 <div class="container">
 
@@ -58,6 +77,7 @@
   <!--Botón de registro-->
   <div class="row justify-content-md-center" *ngIf="isValidPlayerName == false">
     <div class="col-md-auto" >
+        <button type="button" class="btn btn-outline-primary mx-5" (click)="open(iniciodeusuario)">Iniciar</button>
         <button type="button" class="btn btn-outline-primary mx-5" (click)="open(registrodeusuario)">Registrarme</button>
     </div>
   </div>
@@ -112,23 +132,11 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <th scope="row">Partida 1</th>
-            <td>Jugando</td>
-            <td>N/A</td>
-            <td><button type="button" class="btn btn-outline-primary" (click)="unirmeAPartida()">Unirme a partida</button></td>
-          </tr>
-          <tr>
-            <th scope="row">Partida 2</th>
-            <td>Espera</td>
-            <td>N/A</td>
-            <td><button type="button" class="btn btn-outline-primary" (click)="unirmeAPartida()">Unirme a partida</button></td>
-          </tr>
-          <tr>
-            <th scope="row">Partida 3</th>
-            <td>Finalizó</td>
-            <td>J 2</td>
-            <td><button type="button" class="btn btn-outline-primary" (click)="unirmeAPartida()">Unirme a partida</button></td>
+          <tr *ngFor="let ag of allGames; let i = index" >
+            <th scope="row">{{ag.name}}</th>
+            <td>{{ag.status == 0 ? "Espera" : ag.status == 1 ? "Jugando" : "Finalizada"}}</td>
+            <td>{{ag.winnername != null ? ag.winnername : "No tiene"}}</td>
+            <td><button type="button" class="btn btn-outline-primary" (click)="unirmeAPartida(ag.id)">Unirme a partida</button></td>
           </tr>
         </tbody>
       </table>
