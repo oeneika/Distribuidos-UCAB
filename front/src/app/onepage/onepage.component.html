@@ -38,24 +38,6 @@
   </div>
 </ng-template>
 
-<!-- Modal inicio de usuario -->
-<ng-template #iniciodeusuario let-modal>
-    <div class="modal-header">
-      <h4 class="modal-title" id="modal-basic-title">Inicio de usuario</h4>
-      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
-        <span aria-hidden="true">&times;</span>
-      </button>
-    </div>
-    <div class="modal-body">
-        <div class="form-group">
-          <label for="Nombre del jugador"></label>
-          <input type="text" class="form-control" placeholder="Introduzca su nombre" [(ngModel)]="playerName">
-        </div>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-outline-dark" (click)="iniciar()">Iniciar</button>
-    </div>
-  </ng-template>
 
 <!--Contenido-->
 <div class="container">
@@ -77,7 +59,6 @@
   <!--Botón de registro-->
   <div class="row justify-content-md-center" *ngIf="isValidPlayerName == false">
     <div class="col-md-auto" >
-        <button type="button" class="btn btn-outline-primary mx-5" (click)="open(iniciodeusuario)">Iniciar</button>
         <button type="button" class="btn btn-outline-primary mx-5" (click)="open(registrodeusuario)">Registrarme</button>
     </div>
   </div>
@@ -87,14 +68,9 @@
     <!--Columna de partida-->
     <div class="col-md-6 "  >
       <div class="contenedor" style="height: 220px; overflow-y: scroll;">
-        <h4>Nombre de la partida: dasd</h4>
+        <h4>Nombre de la partida: {{actualGame.name}}</h4>
           <ul class="list-group" style="height: auto;">
             <li class="list-group-item">1. J1# 1:3 - 3:2 #J2</li>
-            <li class="list-group-item">2. J1# 1:3 - 3:2 #J2</li>
-            <li class="list-group-item">3. J1# 1:3 - 3:2 #J2</li>
-            <li class="list-group-item">4. J1# 1:3 - 3:2 #J2</li>
-            <li class="list-group-item">5. J1# 1:3 - 3:2 #J2</li>
-            <li class="list-group-item">6. J1# 1:3 - 3:2 #J2</li>
           </ul>
       </div>
       <div class="fichas">
@@ -135,8 +111,11 @@
           <tr *ngFor="let ag of allGames; let i = index" >
             <th scope="row">{{ag.name}}</th>
             <td>{{ag.status == 0 ? "Espera" : ag.status == 1 ? "Jugando" : "Finalizada"}}</td>
-            <td>{{ag.winnername != null ? ag.winnername : "No tiene"}}</td>
-            <td><button type="button" class="btn btn-outline-primary" (click)="unirmeAPartida(ag.id)">Unirme a partida</button></td>
+            <td>{{ag.winnername != "" ? ag.winnername : "No tiene"}}</td>
+            <td>
+              <button *ngIf="ag.status == 0 && ag.owner != myNodePort && ag.visitor != myNodePort" type="button" class="btn btn-outline-primary" (click)="unirmeAPartida(ag.name)">Unirme a partida</button>
+              <button *ngIf="ag.status != 0 && (ag.owner == myNodePort || ag.visitor == myNodePort) " type="button" class="btn btn-outline-primary" (click)="verPartida(ag.name)">Ir a partida</button>
+            </td>
           </tr>
         </tbody>
       </table>

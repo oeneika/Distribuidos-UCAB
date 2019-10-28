@@ -20,11 +20,22 @@ export class OnepageComponent implements OnInit {
   isValidPlayerName = false;
   playerName = '';
   allGames = [];
+  actualGame = {
+    name: "",
+    status: 0,
+    owner: "",
+    visitor: 0,
+    winner: 0, //cuando un jugador gana se le notifica a toda la red (usar funcion modify game de server.js del back)
+    winnername: "",
+    plays: [], //--> {port: , name: , ficha o jugada: } (puerto del jugador, nombre del jugador, no definido)
+    pieces: [] //-> {port: , name: , fichas: [] } se tendran dos objetos, uno para cada jugador
+  };;
 
   constructor(
     public fb: FormBuilder,
     private http: HttpClient,
     private modalService: NgbModal) {
+
     this.myFormJugada = this.fb.group({
       jugada: ['', [Validators.required]],
     });
@@ -33,9 +44,18 @@ export class OnepageComponent implements OnInit {
       nameGame: ['', [Validators.required]],
     });
     this.playerName = '';
+
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+
+    /*setTimeout(function() {
+      if(this.isValidPlayerName){    
+        this.traerPartidas();
+      }
+    }, 3000);*/
+   
+  }
 
   //Abre un modal
   open(content) {
@@ -48,46 +68,71 @@ export class OnepageComponent implements OnInit {
   }
 
 
-  jugar(){
-    console.log("Realizando una jugada");
-    console.log(this.myFormJugada.value);
+  //Registra el nombre del usuario y lo registra en la red
+  registrarse(){
+
+    let object = {
+      name: this.playerName
+    }
+
+    this.http
+    .post("http://localhost:"+this.myNodePort+"/setName", object)
+    .subscribe((response: any)=>{
+
+     if(response.status == "success"){
+       console.log(response.message);
+      this.isValidPlayerName = true;
+
+      //Trae las partidas
+      this.modalRef.close();
+      this.traerPartidas();
+   
+     }else{
+        alert(response.message);
+     }
+
+    });
+
   }
 
-  unirmeAPartida(){
-    console.log("Estoy en una partida");
-  }
-
-  
   //Trae todas las partidas
   traerPartidas(){
 
-    this.http
-      .get("http://localhost:"+this.myNodePort+"/getGames")
-      .subscribe((response: any)=>{
-  
-      //console.log(response.partidas);   
-      this.allGames = response.partidas;
+    setTimeout( a => {
 
-      });
+        if(this.isValidPlayerName){  
+          this.http
+            .get("http://localhost:"+this.myNodePort+"/getGames")
+            .subscribe((response: any)=>{
+        
+            console.log(response.partidas);   
+            this.allGames = response.partidas;
+
+            });
+        }
+        this.traerPartidas();
+
+    }, 3000);
 
   }
 
   //Crea una partida
   crearPartida(){
     let gameName = this.myFormCrearPartida.value.nameGame;
+    this.myFormCrearPartida.value.nameGame = "";
 
+    //Si no esta vacío
     if(gameName){
 
       let object = {
-        name: gameName,
-        userId: this.myPlayerId 
+        name: gameName
       }
   
       this.http
       .post("http://localhost:"+this.myNodePort+"/checkgamename", object)
       .subscribe((response: any)=>{
   
-       console.log(response);
+       //console.log(response);
   
        if(response.status == "success"){     
         this.modalRef.close();
@@ -101,128 +146,79 @@ export class OnepageComponent implements OnInit {
       alert("El nombre de la partida no puede estar vacío");
     }
 
-
   }
 
-  //Registra el nombre del usuario
-  registrarse(){
+  /**
+   * Une al usuario a una partida
+   * @param gamename: nombre de la partida
+   */
+  unirmeAPartida(gamename){
 
-    let object = {
-      name: this.playerName,
-      register: 1,
+    let obj = {
+      name: gamename
     }
 
     this.http
-    .post("http://localhost:"+this.myNodePort+"/checkplayername", object)
-    .subscribe((response: any)=>{
+      .post("http://localhost:"+this.myNodePort+"/joinGame", obj)
+      .subscribe((response: any)=>{
+  
 
-     console.log(response);
-
-     if(response.status == "success"){
-      this.myPlayerId = response.id;
-      this.isValidPlayerName = true;
-      this.traerPartidas();
-      this.modalRef.close();
-     }else{
-        alert(response.message);
-     }
-
-    });
-
+      });
   }
 
-  //Inicia
-  iniciar(){
 
-    let object = {
-      name: this.playerName,
-      register: 0
+  /**
+   * Devuelve una partida
+   * @param gamename:nombre de la partida
+   */
+  verPartida(gamename){
+
+    let obj = {
+      gamename: gamename
     }
 
+
     this.http
-    .post("http://localhost:"+this.myNodePort+"/checkplayername", object)
-    .subscribe((response: any)=>{
+      .post("http://localhost:"+this.myNodePort+"/getGame",obj)
+      .subscribe((response: any)=>{
+  
+      //console.log(response.partida);   
 
-     console.log(response);
+      this.actualGame = response.partida;
 
-     if(response.status == "success"){
-      this.myPlayerId = response.id;
-      this.isValidPlayerName = true;
-      this.traerPartidas();
-      this.modalRef.close();
-     }else{
-        alert(response.message);
-     }
-
-    });
-
+      });
   }
 
+  /**
+   * Se hace una jugada
+   */
+  jugar(){
 
-  finalizar(){
-    console.log("Finalizar partida");
+    //se debe validar que la ficha pertenece al jugador
+    //se debe validar que la jugada es valida
+
+    //si cumple las dos caracteristicas anteriores se hace la jugada (se actualiza el objeto actualGame)
+    //y se notifica solo al otro jugador que no soy yo (o al owner o al visitor (son los numeros de los puertos ej: 10005))
+
+    //se debe haber modificado actualGame antes de hacer esto
+    let obj = {
+      game: this.actualGame 
+    }
+
+
+    this.http
+      .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
+      .subscribe((response: any)=>{
+  
+
+      });
+
+
   }
+  
+ 
+
 
 }
 
 
-/* ESTE ES LA LOGICA DEL PROFESOR
-export class OnepageComponent implements OnInit {
-
-  localobj = {
-    input1: "0",
-    input2: "0",
-    total: "0"
-  };
-
-  remoteobj = {
-    input1: "0",
-    input2: "0",
-    total: "0"
-  };
-
-  constructor(private http: HttpClient) {
-
-  }
-
-  ngOnInit() {}
-
-  add() {
-    let trans = parseInt(this.localobj.input1) + parseInt(this.localobj.input2);
-    this.localobj.total = trans + "";
-  }
-
-  sub() {
-    let trans = parseInt(this.localobj.input1) - parseInt(this.localobj.input2);
-    this.localobj.total = trans + "";
-  }
-
-
-  addRem() {
-
-    this.http
-    .post("http://localhost:10001/add", this.remoteobj)
-    .subscribe((response: any)=>{
-
-      this.remoteobj.input1 = response.input1;
-      this.remoteobj.input2 = response.input2;
-      this.remoteobj.total = response.total;
-
-    });
-  }
-
-  subRem() {
-    this.http
-    .post("http://localhost:10001/sub", this.remoteobj)
-    .subscribe((response: any)=>{
-      this.remoteobj.input1 = response.input1;
-      this.remoteobj.input2 = response.input2;
-      this.remoteobj.total = response.total;
-
-    });
-  }
-
-}
-
-
-*/
