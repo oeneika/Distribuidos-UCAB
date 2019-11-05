@@ -275,7 +275,7 @@ app.post("/joinGame", urlencodedParser, (req, res) => {
                     games[index].pieces[1].pieces.push(gamepieces[i2]); 
 
                     gamepieces.splice(i1, 1);
-                    gamepieces.splice(i2, 1);
+                    gamepieces.splice(i2-1, 1);
 
                     if(gamepieces.length < 2){
                         finished = true;
