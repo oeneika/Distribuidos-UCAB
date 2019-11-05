@@ -1,138 +1,150 @@
 <!-- Modal Creacion De Partidas-->
 <ng-template #creaciondepartidas let-modal>
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Creación de partida</h4>
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </div>
-  <div class="modal-body">
-    <form [formGroup]="myFormCrearPartida" id="myFormCrearPartida" (ngSubmit)="crearPartida()" novalidate>
-      <div class="form-group">
-        <label for="Nombre de partida"></label>
-        <input type="text" class="form-control" placeholder="Introduzca el nombre de la partida" formControlName="nameGame">
-      </div>
-    </form>
-  </div>
-  <div class="modal-footer">
-    <button type="submit" class="btn btn-outline-dark" form="myFormCrearPartida">Crear partida</button>
-  </div>
-</ng-template>
-
-<!-- Modal Registro de usuario -->
-<ng-template #registrodeusuario let-modal>
-  <div class="modal-header">
-    <h4 class="modal-title" id="modal-basic-title">Registro de usuario</h4>
-    <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </div>
-  <div class="modal-body">
-      <div class="form-group">
-        <label for="Nombre del jugador"></label>
-        <input type="text" class="form-control" placeholder="Introduzca su nombre" [(ngModel)]="playerName">
-      </div>
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-outline-dark" (click)="registrarse()">Registrar usuario</button>
-  </div>
-</ng-template>
-
-
-<!--Contenido-->
-<div class="container">
-
-  <ng-template [ngIf]="isValidPlayerName == false" [ngIfElse]="nameFull">
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title">Creación de partida</h4>
+      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="myFormCrearPartida" id="myFormCrearPartida" (ngSubmit)="crearPartida()" novalidate>
+        <div class="form-group">
+          <label for="Nombre de partida"></label>
+          <input type="text" class="form-control" placeholder="Introduzca el nombre de la partida" formControlName="nameGame">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-outline-dark" form="myFormCrearPartida">Crear partida</button>
+    </div>
+  </ng-template>
+  
+  <!-- Modal Registro de usuario -->
+  <ng-template #registrodeusuario let-modal>
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title">Registro de usuario</h4>
+      <button type="button" class="close" aria-label="Close" (click)="modal.dismiss('Cross click')">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+          <label for="Nombre del jugador"></label>
+          <input type="text" class="form-control" placeholder="Introduzca su nombre" [(ngModel)]="playerName">
+        </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-dark" (click)="registrarse()">Registrar usuario</button>
+    </div>
+  </ng-template>
+  
+  
+  <!--Contenido-->
+  <div class="container">
+  
+    <ng-template [ngIf]="isValidPlayerName == false" [ngIfElse]="nameFull">
+        <div class="my-3">
+          <h4>Hola, por favor registrate.</h4>
+        </div>
+    </ng-template>
+  
+    <ng-template #nameFull>
       <div class="my-3">
-        <h4>Hola, por favor registrate.</h4>
+          <h4>Bienvenido al juego, {{playerName}}</h4>
+          <h4>Nextplayer es, {{Nextplayer}}</h4>
       </div>
-  </ng-template>
-
-  <ng-template #nameFull>
-    <div class="my-3">
-        <h4>Bienvenido al juego, {{playerName}}</h4>
+    </ng-template>
+  
+    <hr>
+  
+    <!--Botón de registro-->
+    <div class="row justify-content-md-center" *ngIf="isValidPlayerName == false">
+      <div class="col-md-auto" >
+          <button type="button" class="btn btn-outline-primary mx-5" (click)="open(registrodeusuario)">Registrarme</button>
+      </div>
     </div>
-  </ng-template>
-
-  <hr>
-
-  <!--Botón de registro-->
-  <div class="row justify-content-md-center" *ngIf="isValidPlayerName == false">
-    <div class="col-md-auto" >
-        <button type="button" class="btn btn-outline-primary mx-5" (click)="open(registrodeusuario)">Registrarme</button>
-    </div>
-  </div>
-
-  <div class="row justify-content-md-center" *ngIf="isValidPlayerName == true">
-
-    <!--Columna de partida-->
-    <div class="col-md-6 "  >
-      <div class="contenedor" style="height: 220px; overflow-y: scroll;">
-        <h4>Nombre de la partida: {{actualGame.name}}</h4>
-          <ul class="list-group" style="height: auto;">
-            <li class="list-group-item">1. J1# 1:3 - 3:2 #J2</li>
-          </ul>
-      </div>
-      <div class="fichas">
-        <h5 class="my-3">Fichas disponibles: </h5>
-        <p class="d-inline mx-2">0:0</p>
-        <p class="d-inline mx-2">0:2</p>
-        <p class="d-inline mx-2">0:6</p>
-        <p class="d-inline mx-2">1:1</p>
-        <p class="d-inline mx-2">1:2</p>
-      </div>
-
-      <div class="input-group my-3">
-        <form [formGroup]="myFormJugada" (ngSubmit)="jugar()" novalidate>
-          <div class="input-group mb-3">
-              <input formControlName="jugada" type="text" class="form-control" placeholder="Introduce tu jugada" aria-label="Introduce tu jugada" aria-describedby="button-addon2">
-              <div class="input-group-append">
-                <button class="btn btn-outline-secondary" type="submit">Jugar</button>
-              </div>
+  
+    <div class="row justify-content-md-center" *ngIf="isValidPlayerName == true">
+  
+      <!--Columna de partida-->
+      <div class="col-md-6 "  >
+        <div class="contenedor" style="height: 220px; overflow-y: scroll;">
+          <h4>Nombre de la partida: {{actualGame.name}}</h4>
+            <ul class="list-group" style="height: auto;">
+              <li class="list-group-item" *ngFor="let acp of actualGame.plays; let i = index">{{acp.piece}}</li>
+            </ul>
+        </div>
+        <div class="fichas">
+          <h5 class="my-3">Fichas disponibles: </h5>
+          <div  *ngIf="actualGame.name != '' ">
+            <div *ngIf="actualGame.pieces[0].port == myNodePort">
+              <p class="d-inline mx-2" *ngFor="let pi of actualGame.pieces[0].pieces; let i = index">{{pi}}</p>
+            </div>
+            <div *ngIf="actualGame.pieces[1].port == myNodePort">
+              <p class="d-inline mx-2" *ngFor="let pi of actualGame.pieces[1].pieces; let i = index">{{pi}}</p>
+            </div>
           </div>
-
-        </form>
+        </div>
+  
+        <div class="input-group my-3">
+          <form [formGroup]="myFormJugada" (ngSubmit)="jugar()" novalidate>
+            <div class="input-group mb-3">
+                <input formControlName="jugada" type="text" class="form-control" placeholder="Introduce tu jugada" aria-label="Introduce tu jugada" aria-describedby="button-addon2">
+                <div class="input-group-append">
+                  <button class="btn btn-outline-secondary" type="submit"  [disabled]="actualGame.status == 2">Jugar</button>
+                </div>
+                <div class="input-group-append">
+                    <button type="button" class="btn btn-outline-primary mx-5" [disabled]="actualGame.status == 2" (click)="rendirse()">Rendirse</button>
+                </div>
+                <div class="input-group-append">
+                  <span *ngIf="this.actualGame.turn == myNodePort">
+                    Es mi turno
+                  </span>
+                </div>
+            </div>
+  
+          </form>
+        </div>
+      </div>
+  
+      <!--Columna del tablero-->
+      <div class="col-md-6 " >
+        <h4>Tablero de partidas</h4>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th scope="col">Nombre</th>
+              <th scope="col">Estatus</th>
+              <th scope="col">Ganador</th>
+              <th scope="col">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let ag of allGames; let i = index" >
+              <th scope="row">{{ag.name}}</th>
+              <td>{{ag.status == 0 ? "Espera" : ag.status == 1 ? "Jugando" : "Finalizada"}}</td>
+              <td>{{ag.winnername != "" ? ag.winnername : "No tiene"}}</td>
+              <td>
+                <button *ngIf="ag.status == 0 && ag.owner != myNodePort && ag.visitor != myNodePort" type="button" class="btn btn-outline-primary" (click)="unirmeAPartida(ag.name)">Unirme a partida</button>
+                <button *ngIf="ag.status != 0 && (ag.owner == myNodePort || ag.visitor == myNodePort) " type="button" class="btn btn-outline-primary" (click)="verPartida(ag.name)">Ir a partida</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+  
+        <div class="mt-4">
+            <button type="button" class="btn btn-outline-primary" (click)="open(creaciondepartidas)">Crear partida</button>       
+        </div>
+      </div>
+  
+    </div>
+  
+  
+    <div class="row">
+      <div class="col-md-12">
+        <p class="text-center mt-5">Desarrolladores: Greg Gómez, Alexander De Azevedo y Cesar Audrines</p>
       </div>
     </div>
-
-    <!--Columna del tablero-->
-    <div class="col-md-6 " >
-      <h4>Tablero de partidas</h4>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th scope="col">Nombre</th>
-            <th scope="col">Estatus</th>
-            <th scope="col">Ganador</th>
-            <th scope="col">Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let ag of allGames; let i = index" >
-            <th scope="row">{{ag.name}}</th>
-            <td>{{ag.status == 0 ? "Espera" : ag.status == 1 ? "Jugando" : "Finalizada"}}</td>
-            <td>{{ag.winnername != "" ? ag.winnername : "No tiene"}}</td>
-            <td>
-              <button *ngIf="ag.status == 0 && ag.owner != myNodePort && ag.visitor != myNodePort" type="button" class="btn btn-outline-primary" (click)="unirmeAPartida(ag.name)">Unirme a partida</button>
-              <button *ngIf="ag.status != 0 && (ag.owner == myNodePort || ag.visitor == myNodePort) " type="button" class="btn btn-outline-primary" (click)="verPartida(ag.name)">Ir a partida</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="mt-4">
-          <button type="button" class="btn btn-outline-primary" (click)="open(creaciondepartidas)">Crear partida</button>
-          <button type="button" class="btn btn-outline-primary mx-5" (click)="finalizar()">Terminé de jugar</button>
-      </div>
-    </div>
-
+  
   </div>
-
-
-  <div class="row">
-    <div class="col-md-12">
-      <p class="text-center mt-5">Desarrolladores: Greg Gómez, Alexander De Azevedo y Cesar Audrines</p>
-    </div>
-  </div>
-
-</div>
+  

@@ -24,12 +24,14 @@ export class OnepageComponent implements OnInit {
     name: "",
     status: 0,
     owner: "",
-    visitor: 0,
-    winner: 0, //cuando un jugador gana se le notifica a toda la red (usar funcion modify game de server.js del back)
+    visitor: "",
+    winner: "", //cuando un jugador gana se le notifica a toda la red (usar funcion modify game de server.js del back)
     winnername: "",
+    turn: "",
     plays: [], //(puerto del jugador, nombre del jugador, no definido)
     pieces: [] // se tendran dos objetos, uno para cada jugador
   };;
+  Nextplayer:0;
 
   constructor(
     public fb: FormBuilder,
@@ -108,7 +110,21 @@ export class OnepageComponent implements OnInit {
             console.log(response.partidas);   
             this.allGames = response.partidas;
 
+            for (let key in this.allGames) {
+              if(this.allGames[key].name == this.actualGame.name){
+                this.actualGame = this.allGames[key];
+              }
+            }
+
             });
+
+            this.http
+            .get("http://localhost:"+this.myNodePort+"/getNexPlayer")
+            .subscribe((response: any)=>{
+              this.Nextplayer = response.nextplayer;
+            });
+            
+
         }
         this.traerPartidas();
 
@@ -125,7 +141,8 @@ export class OnepageComponent implements OnInit {
     if(this.actualGame.pieces.every){
 
       let object = {
-        name: gameName
+        name: gameName,
+        playername: this.playerName
       }
   
       this.http
@@ -153,9 +170,10 @@ export class OnepageComponent implements OnInit {
    * @param gamename: nombre de la partida
    */
   unirmeAPartida(gamename){
-
+    
     let obj = {
-      name: gamename
+      name: gamename,
+      playername: this.playerName
     }
 
     this.http
@@ -172,7 +190,7 @@ export class OnepageComponent implements OnInit {
    * @param gamename:nombre de la partida
    */
   verPartida(gamename){
-
+    console.log(gamename);   
     let obj = {
       gamename: gamename
     }
@@ -182,258 +200,68 @@ export class OnepageComponent implements OnInit {
       .post("http://localhost:"+this.myNodePort+"/getGame",obj)
       .subscribe((response: any)=>{
   
-      //console.log(response.partida);   
+      console.log(response.partida);   
 
-      this.actualGame = response.partida;
+        if(response.status.localeCompare("error") != 0){
+          this.actualGame = response.partida;
+        }
 
       });
   }
+
   voltear(jugada){
-    let a = jugada[0];
-    jugada [0] = jugada[2];
-    jugada[2] = a;
-
-
-    return jugada;
+    return jugada[2]+":"+jugada[0];
   }
-  /**
-   * Se hace una jugada
-   */
-  jugar(){
+
+  //Luego de hacer una jugada envia el objeto al otro jugador para que lo actualice
+  sendPLay(playerindex, jugadaoriginal){
+
+    //Quita la ficha del jugador
+    let pieceindex = this.actualGame.pieces[playerindex].pieces.indexOf(jugadaoriginal);
+    this.actualGame.pieces[playerindex].pieces.splice(pieceindex, 1);
+
+    this.actualGame.turn = playerindex == 0 ? this.actualGame.pieces[1].port : this.actualGame.pieces[0].port;
 
     let obj ={
       game: this.actualGame,
       port: this.myNodePort,
     };
-    let jugada = this.myFormJugada.value.jugada;
-    this.myFormJugada.value.jugada='';
-    if (this.actualGame.pieces[0].name == this.playerName){
-      if (this.actualGame.pieces[0].fichas.includes(jugada)){
-        let object ={
-          port: this.myNodePort,
-          name: this.playerName,
-          ficha: jugada,
+
+    this.http
+    .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
+    .subscribe((response: any)=>{
+
+      //Una vez resuelto el post valida si el jugador ganó la partida
+      if(this.actualGame.pieces[playerindex].pieces.length == 0){
+        
+        
+        this.actualGame.status = 2;
+        this.actualGame.winner = this.myNodePort;
+        this.actualGame.winnername = this.playerName;
+
+        let obj2 ={
+          game: this.actualGame,
+          playernotified: this.myNodePort
         };
-        if (this.actualGame.plays.length=== 0){
-          
-          this.actualGame.plays.push(object);
-          obj.game = this.actualGame;
-          this.http
-            .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-            .subscribe((response: any)=>{
-            });
 
+        this.http
+        .post("http://localhost:"+this.myNodePort+"/updateGame",obj2)
+        .subscribe((response: any)=>{
 
-        }
-        else if ( this.actualGame.plays.length == 1){
-          let ficha_jugada = this.actualGame.plays[0].ficha;
-          if (jugada[2] == ficha_jugada[0]){
-            this.actualGame.plays.unshift(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[0] == ficha_jugada[0]){
-            jugada = this.voltear(jugada);
-            object.ficha = jugada;
-            this.actualGame.plays.unshift(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[0] == ficha_jugada[2]){
-            this.actualGame.plays.push(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[2] == ficha_jugada[2]){
-            jugada = this.voltear(jugada);
-            object.ficha = jugada;
-            this.actualGame.plays.push(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else {
-            alert("Error: la ficha ingresada no coincide");
-          }
-        }
-        else if (this.actualGame.plays.length > 1){
-          let primera_ficha = this.actualGame.plays[0].ficha;
-          let ultima_ficha = this.actualGame.plays[this.actualGame.plays.length - 1].ficha;
-          let object ={
-            port: this.myNodePort,
-            name: this.playerName,
-            ficha: jugada,
-          };
-          if (jugada[2] == primera_ficha[0]){
-            this.actualGame.plays.unshift(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[0] == primera_ficha[0]){
-            jugada = this.voltear(jugada);
-            object.ficha = jugada;
-            this.actualGame.plays.unshift(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[0] == ultima_ficha[2]){
-            this.actualGame.plays.push(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[2] == ultima_ficha[2]){
-            jugada = this.voltear(jugada);
-            object.ficha = jugada;
-            this.actualGame.plays.push(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else {
-            alert("Error: la ficha ingresada no coincide");
-          }
+        });
 
-        }
       }
-      else{
-        alert("Error: No posee la ficha ingresada.")
-      }
-    }
-    else if (this.actualGame.pieces[1].name == this.playerName){
-      if (this.actualGame.pieces[1].fichas.includes(jugada)){
-        let object ={
-          port: this.myNodePort,
-          name: this.playerName,
-          ficha: jugada,
-        };
-        if (this.actualGame.plays.length == 0){
-          
-          this.actualGame.plays.push(object);
-          obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-               });
 
-        }
-        else if ( this.actualGame.plays.length == 1){
-          let ficha_jugada = this.actualGame.plays[0].ficha;
-          if (jugada[2] == ficha_jugada[0]){
-            this.actualGame.plays.unshift(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[0] == ficha_jugada[0]){
-            jugada = this.voltear(jugada);
-            object.ficha = jugada;
-            this.actualGame.plays.unshift(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[0] == ficha_jugada[2]){
-            this.actualGame.plays.push(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[2] == ficha_jugada[2]){
-            jugada = this.voltear(jugada);
-            object.ficha = jugada;
-            this.actualGame.plays.push(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else {
-            alert("Error: la ficha ingresada no coincide");
-          }
-        }
-        else if (this.actualGame.plays.length > 1){
-          let primera_ficha = this.actualGame.plays[0].ficha;
-          let ultima_ficha = this.actualGame.plays[this.actualGame.plays.length - 1].ficha;
-          let object ={
-            port: this.myNodePort,
-            name: this.playerName,
-            ficha: jugada,
-          };
-          if (jugada[2] == primera_ficha[0]){
-            this.actualGame.plays.unshift(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[0] == primera_ficha[0]){
-            jugada = this.voltear(jugada);
-            object.ficha = jugada;
-            this.actualGame.plays.unshift(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[0] == ultima_ficha[2]){
-            this.actualGame.plays.push(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else if (jugada[2] == ultima_ficha[2]){
-            jugada = this.voltear(jugada);
-            object.ficha = jugada;
-            this.actualGame.plays.push(object);
-            obj.game = this.actualGame;
-            this.http
-              .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
-              .subscribe((response: any)=>{
-              });
-          }
-          else {
-            alert("Error: la ficha ingresada no coincide");
-          }
+    });
 
-        }
-      }
-      else{
-        alert("Error: No posee la ficha ingresada.")
-      }
-    } 
+  }
+
+
+  /**
+   * Se hace una jugada
+   */
+  jugar(){
+
     //se debe validar que la ficha pertenece al jugador
     //se debe validar que la jugada es valida
 
@@ -441,11 +269,151 @@ export class OnepageComponent implements OnInit {
     //y se notifica solo al otro jugador que no soy yo (o al owner o al visitor (son los numeros de los puertos ej: 10005))
 
     //se debe haber modificado actualGame antes de hacer esto
+
+    if(this.actualGame.turn.localeCompare(this.myNodePort) == 0){
+
+      let jugadaoriginal = this.myFormJugada.value.jugada
+      let jugada = jugadaoriginal;
+      this.myFormJugada.value.jugada='';
+      let index = 0;
     
 
+      //Valida el index del jugador
+      if (this.actualGame.pieces[1].name.localeCompare(this.playerName) == 0 ){
+        index = 1;
+      }
+
+      //Si poseo la ficha
+      if (this.actualGame.pieces[index].pieces.includes(jugada)){
+
+        let play ={
+          port: this.myNodePort,
+          name: this.playerName,
+          piece: jugada,
+        };
+
+        //Si no hay jugadas
+        if (this.actualGame.plays.length == 0){
+          
+          this.actualGame.plays.push(play);
+          this.sendPLay(index, jugadaoriginal);
+
+        }
+        else 
+
+        //Si hay una sola ficha en tablero
+        if ( this.actualGame.plays.length == 1){
+
+          let ficha_en_tablero = this.actualGame.plays[0].piece;
+          if (jugada[2] == ficha_en_tablero[0]){
+
+            this.actualGame.plays.unshift(play);
+            this.sendPLay(index, jugadaoriginal);
+
+          }
+          else if (jugada[0] == ficha_en_tablero[0]){
+
+            jugada = this.voltear(jugada);
+            play.piece = jugada;
+            this.actualGame.plays.unshift(play);
+            this.sendPLay(index, jugadaoriginal);
+
+          }
+          else if (jugada[0] == ficha_en_tablero[2]){
+
+            this.actualGame.plays.push(play);
+            this.sendPLay(index, jugadaoriginal);
+            
+          }
+          else if (jugada[2] == ficha_en_tablero[2]){
+
+            jugada = this.voltear(jugada);
+            play.piece = jugada;
+            this.actualGame.plays.push(play);
+            this.sendPLay(index, jugadaoriginal);
+           
+          }
+          else {
+            alert("Error: la ficha ingresada no coincide");
+          }
+
+        }
+        else 
+
+        //Si hay mas de una ficha en tablero
+        if (this.actualGame.plays.length > 1){
+
+          let primera_ficha = this.actualGame.plays[0].piece;
+          let ultima_ficha = this.actualGame.plays[this.actualGame.plays.length - 1].piece;
+         
+          if (jugada[2] == primera_ficha[0]){
+
+            this.actualGame.plays.unshift(play);
+            this.sendPLay(index, jugadaoriginal);
+            
+          }
+          else if (jugada[0] == primera_ficha[0]){
+
+            jugada = this.voltear(jugada);
+            play.piece = jugada;
+            this.actualGame.plays.unshift(play);
+            this.sendPLay(index, jugadaoriginal);
+
+          }
+          else if (jugada[0] == ultima_ficha[2]){
+
+            this.actualGame.plays.push(play);
+            this.sendPLay(index, jugadaoriginal);
+
+          }
+          else if (jugada[2] == ultima_ficha[2]){
+
+            jugada = this.voltear(jugada);
+            play.piece = jugada;
+            this.actualGame.plays.push(play);
+            this.sendPLay(index, jugadaoriginal);
+
+          }
+          else {
+            alert("Error: la ficha ingresada no coincide");
+          }
+
+        }
+
+      }
+
+      //Si no poseo la ficha
+      else{
+        alert("Error: No posee la ficha ingresada.")
+      }
+
+
+    }else{
+      alert("No es mi turno");
+    }
+
+    
   }
-  
- 
+
+
+  rendirse(){
+
+        this.actualGame.status = 2;
+        this.actualGame.winner = this.myNodePort == this.actualGame.owner ? this.actualGame.visitor : this.actualGame.owner;
+        this.actualGame.winnername = "Rendición de "+this.playerName;
+
+        let obj ={
+          game: this.actualGame,
+          playernotified: this.myNodePort
+        };
+
+        this.http
+        .post("http://localhost:"+this.myNodePort+"/updateGame",obj)
+        .subscribe((response: any)=>{
+
+        });
+
+  }
 
 
 }
