@@ -17,6 +17,7 @@ export class OnepageComponent implements OnInit {
 
   myPlayerId;
   myNodePort = "10001";
+  myIp = "http://192.168.0.105:";
   isValidPlayerName = false;
   playerName = '';
   allGames = [];
@@ -25,6 +26,8 @@ export class OnepageComponent implements OnInit {
     status: 0,
     owner: "",
     visitor: "",
+    ownerip: "",
+    visitorip: "",
     winner: "", //cuando un jugador gana se le notifica a toda la red (usar funcion modify game de server.js del back)
     winnername: "",
     turn: "",
@@ -78,7 +81,7 @@ export class OnepageComponent implements OnInit {
     }
 
     this.http
-    .post("http://localhost:"+this.myNodePort+"/setName", object)
+    .post(this.myIp+this.myNodePort+"/setName", object)
     .subscribe((response: any)=>{
 
      if(response.status == "success"){
@@ -104,7 +107,7 @@ export class OnepageComponent implements OnInit {
 
         if(this.isValidPlayerName){  
           this.http
-            .get("http://localhost:"+this.myNodePort+"/getGames")
+            .get(this.myIp+this.myNodePort+"/getGames")
             .subscribe((response: any)=>{
         
             console.log(response.partidas);   
@@ -119,7 +122,7 @@ export class OnepageComponent implements OnInit {
             });
 
             this.http
-            .get("http://localhost:"+this.myNodePort+"/getNexPlayer")
+            .get(this.myIp+this.myNodePort+"/getNexPlayer")
             .subscribe((response: any)=>{
               this.Nextplayer = response.nextplayer;
             });
@@ -146,7 +149,7 @@ export class OnepageComponent implements OnInit {
       }
   
       this.http
-      .post("http://localhost:"+this.myNodePort+"/checkgamename", object)
+      .post(this.myIp+this.myNodePort+"/checkgamename", object)
       .subscribe((response: any)=>{
   
        //console.log(response);
@@ -177,7 +180,7 @@ export class OnepageComponent implements OnInit {
     }
 
     this.http
-      .post("http://localhost:"+this.myNodePort+"/joinGame", obj)
+      .post(this.myIp+this.myNodePort+"/joinGame", obj)
       .subscribe((response: any)=>{
   
 
@@ -197,7 +200,7 @@ export class OnepageComponent implements OnInit {
 
 
     this.http
-      .post("http://localhost:"+this.myNodePort+"/getGame",obj)
+      .post(this.myIp+this.myNodePort+"/getGame",obj)
       .subscribe((response: any)=>{
   
       console.log(response.partida);   
@@ -225,10 +228,11 @@ export class OnepageComponent implements OnInit {
     let obj ={
       game: this.actualGame,
       port: this.myNodePort,
+      ip: this.myIp
     };
 
     this.http
-    .post("http://localhost:"+this.myNodePort+"/makePlay",obj)
+    .post(this.myIp+this.myNodePort+"/makePlay",obj)
     .subscribe((response: any)=>{
 
       //Una vez resuelto el post valida si el jugador ganó la partida
@@ -245,7 +249,7 @@ export class OnepageComponent implements OnInit {
         };
 
         this.http
-        .post("http://localhost:"+this.myNodePort+"/updateGame",obj2)
+        .post(this.myIp+this.myNodePort+"/updateGame",obj2)
         .subscribe((response: any)=>{
 
         });
@@ -408,7 +412,7 @@ export class OnepageComponent implements OnInit {
         };
 
         this.http
-        .post("http://localhost:"+this.myNodePort+"/updateGame",obj)
+        .post(this.myIp+this.myNodePort+"/updateGame",obj)
         .subscribe((response: any)=>{
 
         });

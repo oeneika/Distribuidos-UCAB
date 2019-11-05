@@ -11,6 +11,10 @@ const urlencodedParser = bodyParser.urlencoded({ extended: false });
 //Contenido del enviroment
 const port = process.env.PORT;
 var nextplayer = process.env.NEXT;
+
+const ip = process.env.IP;
+var nextip = process.env.NEXTIP;
+
 var games = [];
 
 var app = express();
@@ -37,13 +41,14 @@ app.post("/setName", urlencodedParser, (req, res) => {
     let body2 = {
         playernotified: nextplayer,
         newplayer: {
-            port: port
+            port: port,
+            ip: ip
         }
     }
 
     let options = {
         method: "POST",
-        uri: "http://localhost:" + nextplayer + "/newplayer",
+        uri: nextip + nextplayer + "/newplayer",
         resolveWithFullResponse: true,
         json: true,
         body: body2
@@ -72,7 +77,7 @@ app.post("/newplayer", urlencodedParser, (req, res) => {
         // 
         let options = {
             method: "POST",
-            uri: "http://localhost:" + nextplayer + "/newplayer",
+            uri: nextip + nextplayer + "/newplayer",
             resolveWithFullResponse: true,
             json: true,
             body: body
@@ -94,6 +99,7 @@ app.post("/newplayer", urlencodedParser, (req, res) => {
 
         if (port != body.newplayer.port) {
             nextplayer = body.newplayer.port;
+            nextip = body.newplayer.ip;
         }
 
         //console.log("El ultimo nodo devuelve");
@@ -162,6 +168,8 @@ function sendNewGame(body, res) {
         status: 0,
         owner: port,
         visitor: 0,
+        ownerip: ip,
+        visitorip: "",
         winner: "", //cuando un jugador gana se le notifica a toda la red (usar funcion modify game de server.js del back)
         winnername: "",
         turn: port,
@@ -174,7 +182,7 @@ function sendNewGame(body, res) {
     //Envia la nueva partida a todos los nodos
     let options = {
         method: "POST",
-        uri: "http://localhost:" + nextplayer + "/addNewGame",
+        uri: nextip + nextplayer + "/addNewGame",
         resolveWithFullResponse: true,
         json: true,
         body: game
@@ -201,7 +209,7 @@ app.post("/addNewGame", urlencodedParser, (req, res) => {
 
         let options = {
             method: "POST",
-            uri: "http://localhost:" + nextplayer + "/addNewGame",
+            uri: nextip + nextplayer + "/addNewGame",
             resolveWithFullResponse: true,
             json: true,
             body: newgame
@@ -245,8 +253,9 @@ app.post("/joinGame", urlencodedParser, (req, res) => {
     for (let index = 0; index < games.length; index++) {
         let element = games[index].name;
 
-        if (gamename.localeCompare(element) == 0) {
+        if (gamename.localeCompare(element) == 0) {         
             games[index].visitor = port;
+            games[index].visitorip = ip;
             games[index].status = 1;
             games[index].pieces.push({ port: port, name: req.body.playername, pieces: [] });
 
@@ -287,7 +296,7 @@ app.post("/joinGame", urlencodedParser, (req, res) => {
 function updateGame(game, playernotified, res){
   let options = {
       method: "POST",
-      uri: "http://localhost:" + nextplayer + "/updateGame",
+      uri: nextip + nextplayer + "/updateGame",
       resolveWithFullResponse: true,
       json: true,
       body: {game:game, playernotified:playernotified}
@@ -360,7 +369,7 @@ app.post("/getGame", urlencodedParser, (req, res) => {
 
 
 //Hacer una jugada
-function makePlay(game, postport, res) {
+function makePlay(game, postport, postip, res) {
 
     let otro_jugador = "";
 
@@ -372,7 +381,7 @@ function makePlay(game, postport, res) {
 
     let options = {
         method: "POST",
-        uri: "http://localhost:" + otro_jugador + "/makePlay",
+        uri: postip + otro_jugador + "/makePlay",
         resolveWithFullResponse: true,
         json: true,
         body: {game:game}
@@ -391,6 +400,7 @@ function makePlay(game, postport, res) {
 app.post("/makePlay", urlencodedParser, (req, res) => {
     let game = req.body.game;
     let postport = req.body.port;
+    let postip= req.body.ip;
 
     //Busco la partida y solo me la modifico a mi y se la mando al otro jugador de la partida
     //(no recorro toda la red, solo se la envio al otro jugador para que la actualice el solo)
@@ -401,7 +411,7 @@ app.post("/makePlay", urlencodedParser, (req, res) => {
             games[index] = game;
 
             if (postport == port) {
-                makePlay(game, postport, res);
+                makePlay(game, postport, postip, res);
             } else {
                 res.json({ status: "success", message: "partida actulizada" });
             }
