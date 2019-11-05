@@ -275,7 +275,8 @@ app.post("/joinGame", urlencodedParser, (req, res) => {
                     games[index].pieces[1].pieces.push(gamepieces[i2]); 
 
                     gamepieces.splice(i1, 1);
-                    gamepieces.splice(i2-1, 1);
+                    i2 = i1 < i2 ? i2 - 1: i2;
+                    gamepieces.splice(i2, 1);
 
                     if(gamepieces.length < 2){
                         finished = true;
@@ -373,15 +374,23 @@ function makePlay(game, postport, postip, res) {
 
     let otro_jugador = "";
 
-    if (game.pieces[0].port != postport) {
+    /*if (game.pieces[0].port != postport) {
         otro_jugador = game.pieces[0].port;
     } else {
         otro_jugador = game.pieces[1].port;
+    }*/
+
+    if (game.owner == postport){
+        otro_jugador = game.visitor;
+        otra_ip = game.visitorip;
+        } else{
+        otro_jugador = game.owner;
+        otra_ip = game.ownerip;
     }
 
     let options = {
         method: "POST",
-        uri: postip + otro_jugador + "/makePlay",
+        uri: otra_ip + otro_jugador + "/makePlay",
         resolveWithFullResponse: true,
         json: true,
         body: {game:game}
