@@ -15,6 +15,10 @@ var nextplayer = process.env.NEXT;
 const ip = process.env.IP;
 var nextip = process.env.NEXTIP;
 
+const iaas = process.env.IAAS;
+const iaasip = process.env.IAASIP;
+
+
 var games = [];
 
 var app = express();
@@ -37,41 +41,90 @@ app.post("/setName", urlencodedParser, (req, res) => {
     let body = req.body;
     process.env.NAMENODE = body.name;
 
-    //Objeto para notificar a la red
-    let body2 = {
-        playernotified: nextplayer,
-        newplayer: {
-            port: port,
-            ip: ip
-        }
-    }
-
-    let options = {
+    //Traer ultima config del IaaS
+    let opt = {
         method: "POST",
-        uri: nextip + nextplayer + "/newplayer",
+        uri: iaasip + iaas + "/getConfig",
         resolveWithFullResponse: true,
         json: true,
-        body: body2
+        body: {
+            port: port
+        }
     };
 
-    rp(options)
-        .then(response => {
-            response = response.body;
-            //console.log("pasamos la info para el siguiente new  " + nextplayer);
-            //console.log("new "+JSON.stringify(response));
-            games = response.games;
-            res.json({ status: response.status, message: response.message });
-        })
-        .catch(e => {
-            console.log("Error pasando la papa a " + nextplayer);
-            res.json({ status: "error", message: "Error" });
-        });
+    rp(opt)
+    .then(responsea => {
+        let responseabody = _.pick(responsea.body, ["message","config"]);
+        
+        //Si existe una config la actualiza
+        if(responseabody.message === "exito"){
+            console.log(responseabody.config);
+            nextip = responseabody.config.nextip;
+            nextplayer = responseabody.config.nextplayer;
+        }
+
+
+        //Objeto para notificar a la red
+        let body2 = {
+            playernotified: nextplayer,
+            newplayer: {
+                port: port,
+                ip: ip
+            }
+        }
+
+        let options = {
+            method: "POST",
+            uri: nextip + nextplayer + "/newplayer",
+            resolveWithFullResponse: true,
+            json: true,
+            body: body2
+        };
+
+        rp(options)
+            .then(response => {
+                response = response.body;
+                //console.log("pasamos la info para el siguiente new  " + nextplayer);
+                //console.log("new "+JSON.stringify(response));
+
+                //Trae las partidas del IaaS
+                let opts = {
+                    method: "GET",
+                    uri: iaasip + iaas + "/getGames",
+                    resolveWithFullResponse: true,
+                    json: true
+                };
+
+                rp(opts)
+                .then(responsec => {
+                    let r = responsec.body;
+                    games = r.games;
+                })
+                .catch(e => {});
+
+  
+
+                res.json({ status: response.status, message: response.message });
+            })
+            .catch(e => {
+                console.log("Error pasando la papa a " + nextplayer);
+                res.json({ status: "error", message: "Error" });
+            });
+
+    })
+    .catch(e => {
+        console.log("Error trayendo data del IaaS");
+        res.json({ status: "error", message: "Error" });
+    });
+           
 
 });
 
 //Une un nodo a la red
-app.post("/newplayer", urlencodedParser, (req, res) => {
+app.post("/newplayer", urlencodedParser, (req, res) => {   
     let body = _.pick(req.body, ["playernotified", "newplayer"]);
+
+    //
     if (body.playernotified != nextplayer) {
 
         // 
@@ -88,7 +141,7 @@ app.post("/newplayer", urlencodedParser, (req, res) => {
                 response = response.body;
                 //console.log("pasamos la info para el siguiente  " + nextplayer);
                 //console.log(JSON.stringify(response));
-                res.json({ status: response.status, message: response.message, games: response.games });
+                res.json({ status: response.status, message: response.message });
             })
             .catch(e => {
                 //console.log("Error pasando la papa a " + nextplayer);
@@ -98,12 +151,39 @@ app.post("/newplayer", urlencodedParser, (req, res) => {
     } else {
 
         if (port != body.newplayer.port) {
-            nextplayer = body.newplayer.port;
-            nextip = body.newplayer.ip;
+            //console.log("Nodo cambia su config a: ");
+            /*console.log({
+                nextplayer: body.newplayer.port,
+                nextip: body.newplayer.ip,
+                port: port
+            });*/
+            //Setea la nueva config al IaaS y local
+            let opt = {
+                method: "POST",
+                uri: iaasip + iaas + "/setConfig",
+                resolveWithFullResponse: true,
+                json: true,
+                body: {
+                    nextplayer: body.newplayer.port,
+                    nextip: body.newplayer.ip,
+                    port: port
+                }
+            };
+
+            rp(opt)
+                .then(response => {
+                    nextplayer = body.newplayer.port;
+                    nextip = body.newplayer.ip;              
+                })
+                .catch(e => {
+                    //console.log("Error pasando la papa a " + nextplayer);
+                    
+                });
+        
         }
 
         //console.log("El ultimo nodo devuelve");
-        res.json({ status: "success", message: "Jugador agregado con exito", games: games });
+        res.json({ status: "success", message: "Jugador agregado con exito" });
     }
 
 });
@@ -116,7 +196,7 @@ app.get("/getGames", urlencodedParser, (req, res) => {
 });
 
 //Devuelve el nextplayer
-app.get("/getNexPlayer", urlencodedParser, (req, res) => {
+app.get("/getNextPlayer", urlencodedParser, (req, res) => {
 
     res.json({ status: "success", message: "exito", nextplayer: nextplayer });
 
@@ -176,8 +256,22 @@ function sendNewGame(body, res) {
         plays: [/*{ port: "", name: "", piece: "" }*/], //(puerto del jugador, nombre del jugador, no definido)
         pieces: [{ port: port, name: body.playername, pieces: [] }] //se tendran dos objetos, uno para cada jugador
     }; 
-    games.push(game);
-    
+    games.push(game); 
+
+     //Envia la nueva partida a todos los nodos
+     let optg = {
+        method: "POST",
+        uri: iaasip + iaas + "/setGames",
+        resolveWithFullResponse: true,
+        json: true,
+        body: { games : games }
+    };
+
+    rp(optg)
+        .then(response => { })
+        .catch(e => {});
+
+
     
     //Envia la nueva partida a todos los nodos
     let options = {
@@ -285,7 +379,7 @@ app.post("/joinGame", urlencodedParser, (req, res) => {
                 }
 
             }
-            
+
             updateGame(games[index], port, res);
         }
     }
@@ -293,7 +387,7 @@ app.post("/joinGame", urlencodedParser, (req, res) => {
 
 });
 
-
+//Hace el post para actualizar el juego
 function updateGame(game, playernotified, res){
   let options = {
       method: "POST",
@@ -313,6 +407,7 @@ function updateGame(game, playernotified, res){
         });
   }
 
+//
 app.post("/updateGame", urlencodedParser, (req, res) => {
   //console.log("nodo recibe modify");
   let game = req.body.game;
@@ -327,8 +422,22 @@ app.post("/updateGame", urlencodedParser, (req, res) => {
           if (nextplayer != playernotified) {
             updateGame(game, playernotified, res);
           } else {
-              //console.log("nodo finaliza modify");
-              res.json({ status: "success", message: "partida finalizada" });
+              
+            //Actualiza la partida en el Iaas
+            let optg = {
+                method: "POST",
+                uri: iaasip + iaas + "/setGames",
+                resolveWithFullResponse: true,
+                json: true,
+                body: { games : games }
+            };
+
+            rp(optg)
+                .then(response => { })
+                .catch(e => {});
+
+
+              res.json({ status: "success", message: "partida actualizada" });
           }
 
 
@@ -372,23 +481,28 @@ app.post("/getGame", urlencodedParser, (req, res) => {
 //Hacer una jugada
 function makePlay(game, postport, postip, res) {
 
-    let otro_jugador = "";
+    /*let otro_jugador = "";
+    let otra_ip = ""
 
-    if (game.pieces[0].port != postport) {
-        otro_jugador = game.pieces[0].port;
+
+    if (game.owner == postport) {
+        otro_jugador = game.visitor;
+        otra_ip = game.visitorip;
     } else {
-        otro_jugador = game.pieces[1].port;
-    }
+        otro_jugador = game.owner;
+        otra_ip = game.ownerip;
+    }*/
+
 
     let options = {
         method: "POST",
-        uri: postip + otro_jugador + "/makePlay",
+        uri: nextip + nextplayer + "/makePlay",
         resolveWithFullResponse: true,
         json: true,
-        body: {game:game}
+        body: {game:game, port:postport, ip:postip}
     };
 
-    console.log("uri: "+options.uri);
+    //console.log("uri: "+options.uri);
     rp(options)
         .then(response => {
             res.json({ status: response.status, message: response.message });
@@ -411,9 +525,26 @@ app.post("/makePlay", urlencodedParser, (req, res) => {
         if (game.name.localeCompare(element) == 0) {
             games[index] = game;
 
-            if (postport == port) {
+
+
+            if (postport != nextplayer) {
                 makePlay(game, postport, postip, res);
             } else {
+
+                //Envia la nueva al Iaas
+                let optg = {
+                    method: "POST",
+                    uri: iaasip + iaas + "/setGames",
+                    resolveWithFullResponse: true,
+                    json: true,
+                    body: { games : games }
+                };
+
+                rp(optg)
+                    .then(response => { })
+                    .catch(e => {});
+
+
                 res.json({ status: "success", message: "partida actulizada" });
             }
         }

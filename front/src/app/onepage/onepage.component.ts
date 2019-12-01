@@ -17,7 +17,7 @@ export class OnepageComponent implements OnInit {
 
   myPlayerId;
   myNodePort = "10001";
-  myIp = "http://192.168.0.105:";
+  myIp = "http://localhost:";
   isValidPlayerName = false;
   playerName = '';
   allGames = [];
@@ -105,30 +105,37 @@ export class OnepageComponent implements OnInit {
 
     setTimeout( a => {
 
-        if(this.isValidPlayerName){  
+        //Si el nombre es válido
+        if(this.isValidPlayerName){
+
+          //Get de partidas guardadas en mi back
           this.http
             .get(this.myIp+this.myNodePort+"/getGames")
             .subscribe((response: any)=>{
         
-            console.log(response.partidas);   
+            //console.log(response.partidas);
+            //Almacena   
             this.allGames = response.partidas;
 
-            for (let key in this.allGames) {
-              if(this.allGames[key].name == this.actualGame.name){
-                this.actualGame = this.allGames[key];
+              //Actualiza el juego actual
+              for (let key in this.allGames) {
+                if(this.allGames[key].name == this.actualGame.name){
+                  this.actualGame = this.allGames[key];
+                }
               }
-            }
 
             });
 
+            //Actualizo mi nextplayer
             this.http
-            .get(this.myIp+this.myNodePort+"/getNexPlayer")
+            .get(this.myIp+this.myNodePort+"/getNextPlayer")
             .subscribe((response: any)=>{
               this.Nextplayer = response.nextplayer;
             });
             
 
         }
+
         this.traerPartidas();
 
     }, 3000);
