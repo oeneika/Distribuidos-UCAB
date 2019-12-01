@@ -55,11 +55,11 @@ export class OnepageComponent implements OnInit {
   ngOnInit() {
 
     /*setTimeout(function() {
-      if(this.isValidPlayerName){    
+      if(this.isValidPlayerName){
         this.traerPartidas();
       }
     }, 3000);*/
-   
+
   }
 
   //Abre un modal
@@ -91,7 +91,7 @@ export class OnepageComponent implements OnInit {
       //Trae las partidas
       this.modalRef.close();
       this.traerPartidas();
-   
+
      }else{
         alert(response.message);
      }
@@ -132,7 +132,7 @@ export class OnepageComponent implements OnInit {
             .subscribe((response: any)=>{
               this.Nextplayer = response.nextplayer;
             });
-            
+
 
         }
 
@@ -154,19 +154,19 @@ export class OnepageComponent implements OnInit {
         name: gameName,
         playername: this.playerName
       }
-  
+
       this.http
       .post(this.myIp+this.myNodePort+"/checkgamename", object)
       .subscribe((response: any)=>{
-  
+
        //console.log(response);
-  
-       if(response.status == "success"){     
+
+       if(response.status == "success"){
         this.modalRef.close();
        }else{
           alert(response.message);
        }
-  
+
       });
 
     }else{
@@ -180,7 +180,7 @@ export class OnepageComponent implements OnInit {
    * @param gamename: nombre de la partida
    */
   unirmeAPartida(gamename){
-    
+
     let obj = {
       name: gamename,
       playername: this.playerName
@@ -189,7 +189,7 @@ export class OnepageComponent implements OnInit {
     this.http
       .post(this.myIp+this.myNodePort+"/joinGame", obj)
       .subscribe((response: any)=>{
-  
+
 
       });
   }
@@ -200,7 +200,7 @@ export class OnepageComponent implements OnInit {
    * @param gamename:nombre de la partida
    */
   verPartida(gamename){
-    console.log(gamename);   
+    console.log(gamename);
     let obj = {
       gamename: gamename
     }
@@ -209,8 +209,8 @@ export class OnepageComponent implements OnInit {
     this.http
       .post(this.myIp+this.myNodePort+"/getGame",obj)
       .subscribe((response: any)=>{
-  
-      console.log(response.partida);   
+
+      console.log(response.partida);
 
         if(response.status.localeCompare("error") != 0){
           this.actualGame = response.partida;
@@ -244,8 +244,8 @@ export class OnepageComponent implements OnInit {
 
       //Una vez resuelto el post valida si el jugador ganó la partida
       if(this.actualGame.pieces[playerindex].pieces.length == 0){
-        
-        
+
+
         this.actualGame.status = 2;
         this.actualGame.winner = this.myNodePort;
         this.actualGame.winnername = this.playerName;
@@ -287,7 +287,7 @@ export class OnepageComponent implements OnInit {
       let jugada = jugadaoriginal;
       this.myFormJugada.value.jugada='';
       let index = 0;
-    
+
 
       //Valida el index del jugador
       if (this.actualGame.pieces[1].name.localeCompare(this.playerName) == 0 ){
@@ -305,12 +305,12 @@ export class OnepageComponent implements OnInit {
 
         //Si no hay jugadas
         if (this.actualGame.plays.length == 0){
-          
+
           this.actualGame.plays.push(play);
           this.sendPLay(index, jugadaoriginal);
 
         }
-        else 
+        else
 
         //Si hay una sola ficha en tablero
         if ( this.actualGame.plays.length == 1){
@@ -334,7 +334,7 @@ export class OnepageComponent implements OnInit {
 
             this.actualGame.plays.push(play);
             this.sendPLay(index, jugadaoriginal);
-            
+
           }
           else if (jugada[2] == ficha_en_tablero[2]){
 
@@ -342,26 +342,26 @@ export class OnepageComponent implements OnInit {
             play.piece = jugada;
             this.actualGame.plays.push(play);
             this.sendPLay(index, jugadaoriginal);
-           
+
           }
           else {
             alert("Error: la ficha ingresada no coincide");
           }
 
         }
-        else 
+        else
 
         //Si hay mas de una ficha en tablero
         if (this.actualGame.plays.length > 1){
 
           let primera_ficha = this.actualGame.plays[0].piece;
           let ultima_ficha = this.actualGame.plays[this.actualGame.plays.length - 1].piece;
-         
+
           if (jugada[2] == primera_ficha[0]){
 
             this.actualGame.plays.unshift(play);
             this.sendPLay(index, jugadaoriginal);
-            
+
           }
           else if (jugada[0] == primera_ficha[0]){
 
@@ -403,7 +403,7 @@ export class OnepageComponent implements OnInit {
       alert("No es mi turno");
     }
 
-    
+
   }
 
 

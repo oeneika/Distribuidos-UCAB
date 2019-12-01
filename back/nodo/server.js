@@ -369,7 +369,7 @@ app.post("/joinGame", urlencodedParser, (req, res) => {
                     games[index].pieces[1].pieces.push(gamepieces[i2]); 
 
                     gamepieces.splice(i1, 1);
-                    i2 = i1 < i2 ? i2-1 : i2;
+                    i2 = i1 < i2 ? i2 - 1: i2;
                     gamepieces.splice(i2, 1);
 
                     if(gamepieces.length < 2){
